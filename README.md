@@ -1,24 +1,27 @@
-# Cómo iniciar Pangui
+# Pangui Monitor 🐧
 
-## 1. Servidor Central
-Abre una terminal en `pangui/server` y ejecuta:
+Monitor de servicios en tiempo real optimizado para servidores Debian.
+
+## 🚀 Instalación Rápida (Servidor Central)
+Para instalar todo el entorno (Node, Nginx, PM2, Backend y Frontend) en un servidor Debian limpio:
+
 ```bash
-$env:Path = "C:\Program Files\nodejs;" + $env:Path # Solo si no está en el PATH
-npm start # O node index.js
+mkdir -p pangui && cd pangui
+curl -sL https://raw.githubusercontent.com/kenny2506/PANGUI/main/server/install.sh | bash
 ```
 
-## 2. Agente (En cada servidor Debian)
-Abre una terminal en `pangui/agent` y ejecuta:
+## 🐧 Instalación del Agente (Nodos Remotos)
+En cada servidor Debian que desees monitorear:
+
 ```bash
-node monitor.js
+mkdir -p pangui && cd pangui
+export SERVER_URL="http://IP_DE_TU_SERVER_CENTRAL:3000"
+curl -sL https://raw.githubusercontent.com/kenny2506/PANGUI/main/agent/setup_agent.sh | bash
 ```
 
-## 3. Frontend
-Abre una terminal en `pangui/client` y ejecuta:
-```bash
-npm run dev
-```
-
-## Credenciales por defecto:
+## 🔐 Credenciales por defecto
 - **Usuario:** `admin`
 - **Contraseña:** `password123`
+
+---
+*Pangui Monitor - Fleet Control v1.2*
