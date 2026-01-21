@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+server_log.txt
+agent_log.txt
+.DS_Store
+.vscode/
+.gemini/
