@@ -18,6 +18,7 @@ const io = new Server(server, {
 });
 
 // API Routes
+app.get('/', (req, res) => res.send('Pangui API is running... Use port 80 for Dashboard.'));
 app.post('/api/login', login);
 
 // Socket.io

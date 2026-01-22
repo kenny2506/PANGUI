@@ -10,7 +10,8 @@ function App() {
 
   useEffect(() => {
     if (!token) return;
-    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
+    // Conecta a la URL de la API si está definida, de lo contrario, usa el origen actual
+    const socket = io(import.meta.env.VITE_API_URL || '');
     socket.on('connect', () => socket.emit('join-client'));
     socket.on('server-update', (data) => {
       setServers(prev => ({ ...prev, [data.hostname]: data }));

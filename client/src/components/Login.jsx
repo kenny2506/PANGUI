@@ -12,7 +12,7 @@ const Login = ({ onLogin }) => {
         setError('');
         setLoading(true);
         try {
-            const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/login`, {
+            const resp = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
