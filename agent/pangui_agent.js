@@ -27,10 +27,18 @@ socket.on('connect_error', (err) => {
 
 function checkStatus(serviceName) {
     return new Promise((resolve) => {
-        // En Debian usamos systemctl para validar servicios
-        exec(`systemctl is-active ${serviceName}`, (error, stdout) => {
-            resolve(stdout.trim()); // Retorna 'active', 'inactive', 'failed', etc.
-        });
+        // Para raco e inka, buscar el proceso directamente (no son servicios de systemd)
+        if (serviceName === 'raco' || serviceName === 'inka') {
+            exec(`pgrep -x ${serviceName}`, (error, stdout) => {
+                // Si pgrep encuentra el proceso, stdout tendrá el PID
+                resolve(stdout.trim() ? 'active' : 'inactive');
+            });
+        } else {
+            // Para asterisk, nginx, etc., usar systemctl
+            exec(`systemctl is-active ${serviceName}`, (error, stdout) => {
+                resolve(stdout.trim()); // Retorna 'active', 'inactive', 'failed', etc.
+            });
+        }
     });
 }
 
