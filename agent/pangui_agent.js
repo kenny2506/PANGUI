@@ -28,9 +28,14 @@ socket.on('connect_error', (err) => {
 function checkStatus(serviceName) {
     return new Promise((resolve) => {
         // Para raco e inka, buscar el proceso directamente (no son servicios de systemd)
-        if (serviceName === 'raco' || serviceName === 'inka') {
-            exec(`pgrep -x ${serviceName}`, (error, stdout) => {
-                // Si pgrep encuentra el proceso, stdout tendrá el PID
+        if (serviceName === 'raco') {
+            // raco es en realidad racodialer (proceso Java)
+            exec(`pgrep -f racodialer`, (error, stdout) => {
+                resolve(stdout.trim() ? 'active' : 'inactive');
+            });
+        } else if (serviceName === 'inka') {
+            // Buscar proceso inka
+            exec(`pgrep -f inka`, (error, stdout) => {
                 resolve(stdout.trim() ? 'active' : 'inactive');
             });
         } else {
@@ -81,7 +86,8 @@ async function reportMetrics() {
             cpu: cpu.currentLoad.toFixed(1),
             ram: {
                 total: mem.total,
-                usagePercent: ((mem.active / mem.total) * 100).toFixed(1)
+                // Usar available para calcular el uso real (excluye buff/cache)
+                usagePercent: (((mem.total - mem.available) / mem.total) * 100).toFixed(1)
             },
             disk: {
                 use: disk.length > 0 ? disk[0].use.toFixed(1) : '0'
