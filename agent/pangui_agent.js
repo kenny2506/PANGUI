@@ -64,6 +64,9 @@ async function reportMetrics() {
         const racoStatus = await checkStatus('raco');
         const inkaStatus = await checkStatus('inka');
 
+        // Debug: mostrar estado de servicios
+        console.log(`[Services] asterisk:${asteriskStatus} nginx:${nginxStatus} raco:${racoStatus} inka:${inkaStatus}`);
+
         // Calcular uptime en formato legible
         const uptimeSeconds = os.uptime();
         const days = Math.floor(uptimeSeconds / 86400);
@@ -78,7 +81,7 @@ async function reportMetrics() {
             cpu: cpu.currentLoad.toFixed(1),
             ram: {
                 total: mem.total,
-                usagePercent: ((mem.used / mem.total) * 100).toFixed(1)
+                usagePercent: ((mem.active / mem.total) * 100).toFixed(1)
             },
             disk: {
                 use: disk.length > 0 ? disk[0].use.toFixed(1) : '0'
