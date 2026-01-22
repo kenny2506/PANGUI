@@ -36,30 +36,44 @@ function checkStatus(serviceName) {
 
 async function reportMetrics() {
     try {
-        const cpu = await si.currentLoad();
-        const mem = await si.mem();
-        const disk = await si.fsSize();
-        const net = await si.networkInterfaces();
+        const [cpu, mem, disk, net, osInfo] = await Promise.all([
+            si.currentLoad(),
+            si.mem(),
+            si.fsSize(),
+            si.networkInterfaces(),
+            si.osInfo()
+        ]);
 
-        // Obtener IP local (la primera que no sea interna)
-        const ip = net.find(n => !n.internal && n.ip4)?.ip4 || '0.0.0.0';
+        // Obtener IP: primero intentar la IP pública, luego la privada
+        let ip = '0.0.0.0';
+        const publicInterface = net.find(n => !n.internal && n.ip4 && !n.ip4.startsWith('127.'));
+        if (publicInterface) {
+            ip = publicInterface.ip4;
+        }
 
         const asteriskStatus = await checkStatus('asterisk');
         const nginxStatus = await checkStatus('nginx');
         const racoStatus = await checkStatus('raco');
         const inkaStatus = await checkStatus('inka');
 
+        // Calcular uptime en formato legible
+        const uptimeSeconds = os.uptime();
+        const days = Math.floor(uptimeSeconds / 86400);
+        const hours = Math.floor((uptimeSeconds % 86400) / 3600);
+        const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+        const uptimeStr = `${days}d ${hours}h ${minutes}m`;
+
         const metrics = {
             hostname: HOSTNAME,
             ip: ip,
-            os: 'Debian 11',
+            os: `${osInfo.distro} ${osInfo.release}` || 'Linux',
             cpu: cpu.currentLoad.toFixed(1),
             ram: {
                 total: mem.total,
-                usagePercent: ((mem.active / mem.total) * 100).toFixed(1)
+                usagePercent: ((mem.used / mem.total) * 100).toFixed(1)
             },
             disk: {
-                use: disk[0] ? disk[0].use.toFixed(1) : 0
+                use: disk.length > 0 ? disk[0].use.toFixed(1) : '0'
             },
             services: {
                 asterisk: asteriskStatus,
@@ -68,11 +82,12 @@ async function reportMetrics() {
                 inka: inkaStatus,
                 ssh: 'active'
             },
-            uptime: Math.floor(os.uptime() / 86400) + 'd ' + Math.floor((os.uptime() % 86400) / 3600) + 'h',
+            uptime: uptimeStr,
             timestamp: Date.now()
         };
 
         socket.emit('metrics', metrics);
+        console.log(`[Metrics] Enviado: ${HOSTNAME} | IP: ${ip} | CPU: ${metrics.cpu}% | RAM: ${metrics.ram.usagePercent}%`);
     } catch (e) {
         console.error('Error reportando métricas:', e);
     }
