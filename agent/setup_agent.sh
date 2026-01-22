@@ -31,7 +31,8 @@ cd agent
 npm install
 
 # 4. Iniciar agente
-pm2 start monitor.js --name "pangui-agent" --update-env
+cd ..
+pm2 start agent/monitor.js --name "pangui-agent" --update-env
 pm2 save
 
 echo "Agente Pangui conectado."

@@ -83,7 +83,8 @@ if command -v ufw > /dev/null; then
 fi
 
 # 8. Iniciar Servidor con PM2
-pm2 start index.js --name "pangui-server"
+cd $PROJECT_ROOT
+pm2 start server/index.js --name "pangui-server"
 pm2 save
 
 echo "¡Pangui Monitor instalado con éxito!"
