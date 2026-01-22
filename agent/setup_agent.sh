@@ -39,7 +39,7 @@ npm install
 # 4. Iniciar agente
 cd "$PROJECT_ROOT"
 pm2 delete pangui-agent 2>/dev/null || true
-pm2 start agent/monitor.js --name "pangui-agent" --update-env
+pm2 start agent/pangui_agent.js --name "pangui-agent" --update-env
 pm2 save
 
 echo "Agente Pangui conectado."

@@ -7,7 +7,7 @@ const os = require('os');
  * CONFIGURACIÓN DEL SERVIDOR CENTRAL
  * Cambia 'localhost' por la IP pública o dominio de tu servidor Pangui
  */
-const SERVER_URL = 'http://TU_IP_CENTRAL:3000';
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3000';
 const HOSTNAME = os.hostname();
 const INTERVAL = 3000; // Intervalo de actualización (ms)
 
