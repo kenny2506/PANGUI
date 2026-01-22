@@ -12,26 +12,33 @@ if ! command -v git > /dev/null; then
     apt-get update && apt-get install -y git
 fi
 
-# 1. Clonar el repositorio si no existe
+# 1. Asegurar repositorio
+PROJECT_NAME="PANGUI"
 if [ ! -d ".git" ]; then
-    git clone https://github.com/kenny2506/PANGUI.git .
+    if [ -d "$PROJECT_NAME" ]; then
+        cd "$PROJECT_NAME"
+    else
+        git clone https://github.com/kenny2506/PANGUI.git
+        cd "$PROJECT_NAME"
+    fi
 fi
+
+PROJECT_ROOT=$(pwd)
 
 echo "Configurando Agente Pangui..."
 
-# 2. Verificar/Instalar Node.js
-if ! command -v node > /dev/null; then
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-    apt-get update && apt-get install -y nodejs
-fi
+# 2. Verificar/Instalar Node.js 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt-get update && apt-get install -y nodejs
 
 # 3. Instalar PM2 e dependencias
 npm install -g pm2
-cd agent
+cd "$PROJECT_ROOT/agent"
 npm install
 
 # 4. Iniciar agente
-cd ..
+cd "$PROJECT_ROOT"
+pm2 delete pangui-agent 2>/dev/null || true
 pm2 start agent/monitor.js --name "pangui-agent" --update-env
 pm2 save
 
