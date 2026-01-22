@@ -10,15 +10,24 @@ if ! command -v git > /dev/null; then
     apt-get update && apt-get install -y git
 fi
 
-# 1. Clonar el repositorio
+# 1. Asegurar que estamos en el directorio del proyecto
+PROJECT_NAME="PANGUI"
 if [ ! -d ".git" ]; then
-    echo "Clonando repositorio Pangui..."
-    git clone https://github.com/kenny2506/PANGUI.git .
+    if [ -d "$PROJECT_NAME" ]; then
+        cd "$PROJECT_NAME"
+    else
+        echo "Clonando repositorio Pangui..."
+        git clone https://github.com/kenny2506/PANGUI.git
+        cd "$PROJECT_NAME"
+    fi
 fi
 
-# 2. Actualizar sistema e instalar dependencias nucleares
-echo "Instalando Node.js y Nginx..."
-curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+# Guardar la ruta raíz absoluta del proyecto
+PROJECT_ROOT=$(pwd)
+
+# 2. Actualizar sistema e instalar dependencias nucleares (Node.js 20 necesario para Vite 7)
+echo "Instalando Node.js 20 y Nginx..."
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt-get update
 apt-get install -y nodejs build-essential nginx
 
@@ -28,19 +37,19 @@ npm install -g pm2
 
 # 4. Preparar Backend
 echo "Instalando dependencias del servidor backend..."
-cd server
+cd "$PROJECT_ROOT/server"
 npm install
 
 # 5. Preparar Frontend (Client)
 echo "Construyendo aplicación Frontend..."
-cd ../client
+cd "$PROJECT_ROOT/client"
 npm install
+# Asegurar permisos de ejecución para vite
+chmod +x node_modules/.bin/vite
 npm run build
-cd ../server
 
 # 6. Configurar Nginx
 echo "Configurando Nginx..."
-PROJECT_ROOT=$(dirname "$(pwd)")
 tee /etc/nginx/sites-available/pangui <<EOF
 server {
     listen 80;
@@ -83,7 +92,9 @@ if command -v ufw > /dev/null; then
 fi
 
 # 8. Iniciar Servidor con PM2
-cd $PROJECT_ROOT
+echo "Iniciando servidor con PM2..."
+cd "$PROJECT_ROOT"
+pm2 delete pangui-server 2>/dev/null || true
 pm2 start server/index.js --name "pangui-server"
 pm2 save
 
