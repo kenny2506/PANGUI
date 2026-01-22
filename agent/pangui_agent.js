@@ -72,6 +72,9 @@ async function reportMetrics() {
         // Debug: mostrar estado de servicios
         console.log(`[Services] asterisk:${asteriskStatus} nginx:${nginxStatus} raco:${racoStatus} inka:${inkaStatus}`);
 
+        // Debug: mostrar valores de memoria
+        console.log(`[RAM Debug] total:${(mem.total / 1024 / 1024 / 1024).toFixed(2)}GB used:${(mem.used / 1024 / 1024 / 1024).toFixed(2)}GB active:${(mem.active / 1024 / 1024 / 1024).toFixed(2)}GB available:${(mem.available / 1024 / 1024 / 1024).toFixed(2)}GB`);
+
         // Calcular uptime en formato legible
         const uptimeSeconds = os.uptime();
         const days = Math.floor(uptimeSeconds / 86400);
