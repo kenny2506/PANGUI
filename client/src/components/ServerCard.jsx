@@ -41,56 +41,47 @@ const ServerCard = React.memo(({ server }) => {
     );
 
     return (
-        <div className={`glass p-1 rounded-[2.5rem] transition-all duration-500 hover:scale-[1.01] ${isCritical ? 'critical-glow shadow-red-500/20 shadow-xl' : 'hover:border-blue-500/40'}`}>
+        <div className={`glass p-1 rounded-[2.5rem] transition-all duration-500 hover:scale-[1.005] ${isCritical ? 'critical-glow shadow-red-500/20 shadow-xl' : 'hover:border-blue-500/40'}`}>
             <audio ref={audioRef} loop src="https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3" />
 
-            <div className="bg-[#1e293b]/60 backdrop-blur-md rounded-[2.4rem] p-6 h-full flex flex-col">
-                {/* Header */}
-                <div className="flex justify-between items-start mb-6">
-                    <div className="flex gap-4">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${isCritical ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'}`}>
-                            <Shield size={24} />
+            <div className="bg-[#1e293b]/60 backdrop-blur-md rounded-[2.4rem] p-6 h-full flex flex-col lg:flex-row lg:items-center lg:gap-8">
+                {/* ID Section: Left */}
+                <div className="lg:w-[25%] flex items-center gap-4 mb-6 lg:mb-0">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${isCritical ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                        <Shield size={32} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-xl text-white truncate leading-none" title={server.hostname}>{server.hostname}</h3>
+                            <div className={`w-2.5 h-2.5 rounded-full ${isCritical ? 'bg-red-500 shadow-red-500/50' : 'bg-emerald-500 shadow-emerald-500/50'} shadow-lg shrink-0`} />
                         </div>
-                        <div className="min-w-0 flex-1">
-                            <div className="flex justify-between items-start">
-                                <h3 className="font-bold text-lg text-white truncate leading-tight pr-2" title={server.hostname}>{server.hostname}</h3>
-                                <div className="flex flex-col items-end gap-1 shrink-0">
-                                    <div className={`w-3 h-3 rounded-full ${isCritical ? 'bg-red-500 shadow-red-500/50' : 'bg-emerald-500 shadow-emerald-500/50'} shadow-lg mr-1`} />
-                                    <span className={`text-[9px] font-black uppercase tracking-tighter ${isCritical ? 'text-red-400' : 'text-emerald-400'}`}>
-                                        {isCritical ? 'Alert' : 'Online'}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 mt-1">
-                                <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
-                                    <Globe size={10} /> {server.ip || '0.0.0.0'}
-                                </span>
-                                <span className="text-[10px] py-0.5 px-2 bg-slate-800 text-slate-400 rounded-md font-bold">
-                                    DEBIAN 11
-                                </span>
-                                <span className="text-[10px] py-0.5 px-2 bg-blue-500/10 text-blue-400 rounded-md font-bold border border-blue-500/20 whitespace-nowrap">
-                                    {server.uptime || '0h 0m'}
-                                </span>
-                            </div>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <span className="text-[11px] text-slate-400 font-bold flex items-center gap-1.5 px-2 py-0.5 bg-slate-800/50 rounded-md">
+                                <Globe size={11} /> {server.ip || '0.0.0.0'}
+                            </span>
+                            <span className="text-[10px] text-blue-400 font-bold flex items-center gap-1 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">
+                                <Clock size={11} /> {server.uptime || '0h 0m'}
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 mb-6">
-                    <MetricItem icon={Cpu} label="CPU Load" value={`${server.cpu}%`} percent={server.cpu} colorClass="text-blue-400" bgClass="bg-blue-500" />
-                    <MetricItem icon={Activity} label="Memory" value={`${server.ram.usagePercent}%`} percent={server.ram.usagePercent} colorClass="text-purple-400" bgClass="bg-purple-500" />
-                    <MetricItem icon={HardDrive} label="Storage" value={`${server.disk.use}%`} percent={server.disk.use} colorClass="text-emerald-400" bgClass="bg-emerald-500" />
+                {/* Metrics Section: Center */}
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 lg:mb-0">
+                    <MetricItem icon={Cpu} label="CPU" value={`${server.cpu}%`} percent={server.cpu} colorClass="text-blue-400" bgClass="bg-blue-500" />
+                    <MetricItem icon={Activity} label="RAM" value={`${server.ram.usagePercent}%`} percent={server.ram.usagePercent} colorClass="text-purple-400" bgClass="bg-purple-500" />
+                    <MetricItem icon={HardDrive} label="DISK" value={`${server.disk.use}%`} percent={server.disk.use} colorClass="text-emerald-400" bgClass="bg-emerald-500" />
                 </div>
 
-                {/* Services Status */}
-                <div className="mt-auto bg-slate-900/40 p-4 rounded-2xl border border-white/5">
-                    <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
-                        <span>Critical Services</span>
+                {/* Services Section: Right */}
+                <div className="lg:w-[30%] bg-slate-900/40 p-4 rounded-2xl border border-white/5">
+                    <div className="flex justify-between items-center text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">
+                        <span>Services</span>
                         <span>Status</span>
                     </div>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-300 italic">Asterisk PBX</span>
+                            <span className="text-xs font-bold text-slate-300 italic">Asterisk</span>
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${server.services.asterisk === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400 animate-pulse'}`}>
                                 {server.services.asterisk === 'active' ? 'UP' : 'DOWN'}
                             </span>
@@ -108,20 +99,12 @@ const ServerCard = React.memo(({ server }) => {
                             </span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-300 italic">Core Switch</span>
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400">
-                                UP
+                            <span className="text-xs font-bold text-slate-300 italic">Nginx</span>
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${server.services.nginx === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                                {server.services.nginx === 'active' ? 'UP' : 'DOWN'}
                             </span>
                         </div>
                     </div>
-                </div>
-
-                {/* Footer */}
-                <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase">
-                    <div className="flex items-center gap-1.5 grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                        <Clock size={12} /> <span className="mt-0.5">{server.uptime || '12d 5h 30m'}</span>
-                    </div>
-                    <span className="opacity-40 font-mono">NODE_{server.hostname.split('-').pop().toUpperCase()}</span>
                 </div>
             </div>
         </div>
