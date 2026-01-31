@@ -27,19 +27,15 @@ socket.on('connect_error', (err) => {
 
 function checkStatus(serviceName) {
     return new Promise((resolve) => {
-        // Para raco e inka, buscar el proceso directamente (no son servicios de systemd)
-        if (serviceName === 'raco') {
-            // Buscamos cualquier proceso que contenga 'racodialer' o 'raco'
-            exec(`pgrep -f "racodialer|raco"`, (error, stdout) => {
-                resolve(stdout.trim() ? 'active' : 'inactive');
-            });
-        } else if (serviceName === 'inka') {
-            // Buscamos cualquier proceso que contenga 'inka'
-            exec(`pgrep -f "inka"`, (error, stdout) => {
-                resolve(stdout.trim() ? 'active' : 'inactive');
+        if (serviceName === 'raco' || serviceName === 'inka') {
+            // Usamos ps aux + grep que es infalible para encontrar procesos por nombre
+            const pattern = serviceName === 'raco' ? 'racodialer|raco' : 'inka';
+            exec(`ps aux | grep -E "${pattern}" | grep -v grep`, (error, stdout) => {
+                const isActive = stdout.trim().length > 0;
+                resolve(isActive ? 'active' : 'inactive');
             });
         } else {
-            // Para asterisk, nginx, etc., usar systemctl
+            // Para asterisk, nginx, etc.
             exec(`systemctl is-active ${serviceName}`, (error, stdout) => {
                 resolve(stdout.trim());
             });
