@@ -28,14 +28,13 @@ socket.on('connect_error', (err) => {
 function checkStatus(serviceName) {
     return new Promise((resolve) => {
         if (serviceName === 'raco' || serviceName === 'inka') {
-            // Usamos ps aux + grep que es infalible para encontrar procesos por nombre
-            const pattern = serviceName === 'raco' ? 'racodialer|raco' : 'inka';
-            exec(`ps aux | grep -E "${pattern}" | grep -v grep`, (error, stdout) => {
+            // Buscamos en todo el comando (incluyendo argumentos de java)
+            const pattern = serviceName === 'raco' ? 'raco' : 'inka';
+            exec(`ps -eo args | grep -v grep | grep -i "${pattern}"`, (error, stdout) => {
                 const isActive = stdout.trim().length > 0;
                 resolve(isActive ? 'active' : 'inactive');
             });
         } else {
-            // Para asterisk, nginx, etc.
             exec(`systemctl is-active ${serviceName}`, (error, stdout) => {
                 resolve(stdout.trim());
             });
@@ -65,9 +64,13 @@ async function reportMetrics() {
         const racoStatus = await checkStatus('raco');
         const inkaStatus = await checkStatus('inka');
 
-        // Cálculo de RAM corregido: (Total - Disponible) representa el uso real sin cache
-        const realUsedMem = mem.total - mem.available;
-        const ramUsagePercent = ((realUsedMem / mem.total) * 100).toFixed(1);
+        // RAM: Usar 'active' es lo más preciso en Linux para ver el consumo real sin cache.
+        // Si 'active' falla, usamos (total - available).
+        const usedReal = (mem.active > 0) ? mem.active : (mem.total - mem.available);
+        const ramUsagePercent = ((usedReal / mem.total) * 100).toFixed(1);
+
+        console.log(`[DEBUG] RAM: Total=${(mem.total / 1024 / 1024).toFixed(0)}MB, Active=${(mem.active / 1024 / 1024).toFixed(0)}MB, Available=${(mem.available / 1024 / 1024).toFixed(0)}MB -> ${ramUsagePercent}%`);
+        console.log(`[DEBUG] SERVICIOS: Raco:${racoStatus}, Inka:${inkaStatus}, Asterisk:${asteriskStatus}`);
 
         const uptimeSeconds = os.uptime();
         const days = Math.floor(uptimeSeconds / 86400);
@@ -91,17 +94,16 @@ async function reportMetrics() {
                 asterisk: asteriskStatus,
                 nginx: nginxStatus,
                 raco: racoStatus,
-                inka: inkaStatus,
-                ssh: 'active'
+                inka: inkaStatus
             },
             uptime: uptimeStr,
             timestamp: Date.now()
         };
 
-        socket.emit('metrics', metrics);
+        socket.emit('server-metrics', metrics);
         console.log(`[Metrics] Enviado: ${HOSTNAME} | IP: ${ip} | CPU: ${metrics.cpu}% | RAM: ${metrics.ram.usagePercent}%`);
-    } catch (e) {
-        console.error('Error reportando métricas:', e);
+    } catch (error) {
+        console.error('Error recolectando métricas:', error);
     }
 }
 
