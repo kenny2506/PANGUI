@@ -92,7 +92,7 @@ function App() {
             </div>
             <div className="w-[1px] h-4 bg-white/10" />
             <div className="flex flex-col items-center">
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Alerts</span>
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">ALERTAS</span>
               <span className={`text-[10px] font-black leading-none ${alertNodes > 0 ? 'text-red-400' : 'text-slate-400'}`}>{alertNodes}</span>
             </div>
           </div>
@@ -118,7 +118,7 @@ function App() {
               <LayoutGrid size={24} />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Servers</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">SERVERS</span>
               <span className="text-2xl font-black text-white">{totalNodes} Active</span>
             </div>
           </div>
@@ -128,7 +128,7 @@ function App() {
               <Zap size={24} />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Optimal Status</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">OPTIMO</span>
               <span className="text-2xl font-black text-white">{totalNodes - alertNodes} Healthy</span>
             </div>
           </div>
@@ -138,7 +138,7 @@ function App() {
               <AlertCircle size={24} />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Critical Alarms</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">CRITICO</span>
               <span className={`text-2xl font-black ${alertNodes > 0 ? 'text-red-400' : 'text-slate-400'}`}>{alertNodes} Failing</span>
             </div>
           </div>
