@@ -11,7 +11,7 @@ Hemos creado un script que hace todo por ti (instala Node.js, Git, PM2 y configu
 1. Conéctate a tu servidor remoto por SSH.
 2. Ejecuta este comando:
 ```bash
-curl -sSL https://raw.githubusercontent.com/vaxas/PANGUI/main/install_agent.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/kenny2506/PANGUI/main/install_agent.sh | sudo bash
 ```
 3. El script te pedirá la **IP del Servidor de Monitoreo**. Introdúcela y ¡listo!
 
@@ -35,7 +35,7 @@ sudo npm install pm2 -g
 ```bash
 mkdir -p /var/www/aware/utilidades/pangui
 cd /var/www/aware/utilidades/pangui
-git clone https://github.com/vaxas/PANGUI.git .
+git clone https://github.com/kenny2506/PANGUI.git .
 cd agent
 npm install
 ```
