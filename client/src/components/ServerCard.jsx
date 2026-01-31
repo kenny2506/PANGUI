@@ -4,12 +4,18 @@ import { Cpu, HardDrive, Activity, AlertCircle, Zap, Shield, Globe, Clock } from
 const ServerCard = React.memo(({ server }) => {
     const audioRef = useRef(null);
     const ALERT_THRESHOLD = 85;
+    const OFFLINE_THRESHOLD = 30000; // 30 segundos sin señal
+
+    // Detección de pérdida de conexión
+    const isOffline = (Date.now() - (server.timestamp || 0)) > OFFLINE_THRESHOLD;
 
     const hasAsteriskFail = server.services.asterisk !== 'active';
     const hasRacoFail = server.services.raco && server.services.raco !== 'active';
     const hasInkaFail = server.services.inka && server.services.inka !== 'active';
     const hasHighLoad = server.cpu > ALERT_THRESHOLD || parseFloat(server.ram.usagePercent) > ALERT_THRESHOLD;
-    const isCritical = hasAsteriskFail || hasRacoFail || hasInkaFail || hasHighLoad;
+
+    // Es crítico si falla algo o si se pierde la conexión
+    const isCritical = hasAsteriskFail || hasRacoFail || hasInkaFail || hasHighLoad || isOffline;
 
     useEffect(() => {
         if (isCritical && audioRef.current) {
@@ -55,7 +61,8 @@ const ServerCard = React.memo(({ server }) => {
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-0.5">
                             <h3 className="font-bold text-lg text-white truncate leading-none" title={server.hostname}>{server.hostname}</h3>
-                            <div className={`w-2 h-2 rounded-full ${isCritical ? 'bg-red-500 shadow-red-500/50' : 'bg-emerald-500 shadow-emerald-500/50'} shadow-lg shrink-0`} />
+                            <div className={`w-2 h-2 rounded-full ${isOffline ? 'bg-red-500 animate-ping' : (isCritical ? 'bg-red-500 shadow-red-500/50' : 'bg-emerald-500 shadow-emerald-500/50')} shadow-lg shrink-0`} />
+                            {isOffline && <span className="text-[10px] font-black text-red-400 animate-pulse">SIN SEÑAL</span>}
                         </div>
                         <div className="flex flex-wrap items-center gap-2 mt-0.5">
                             <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
@@ -81,8 +88,8 @@ const ServerCard = React.memo(({ server }) => {
                         {Object.entries(server.services || {}).map(([name, status]) => (
                             <div key={name} className="flex justify-between items-center">
                                 <span className="text-[10px] font-bold text-slate-300 italic capitalize">{name}</span>
-                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400 animate-pulse'}`}>
-                                    {status === 'active' ? 'UP' : 'DOWN'}
+                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${isOffline ? 'bg-slate-800 text-slate-500' : (status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400 animate-pulse')}`}>
+                                    {isOffline ? 'S/S' : (status === 'active' ? 'UP' : 'DOWN')}
                                 </span>
                             </div>
                         ))}
