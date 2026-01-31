@@ -30,13 +30,31 @@ function checkStatus(serviceName) {
         // Para raco e inka, buscar el proceso directamente (no son servicios de systemd)
         if (serviceName === 'raco') {
             // raco es en realidad racodialer (proceso Java)
-            exec(`pgrep -f racodialer`, (error, stdout) => {
-                resolve(stdout.trim() ? 'active' : 'inactive');
+            // Usar pgrep con -x para match exacto y verificar que realmente existe
+            exec(`pgrep -f "java.*racodialer" | head -1`, (error, stdout) => {
+                const pid = stdout.trim();
+                if (pid && !isNaN(pid)) {
+                    // Verificar que el proceso realmente existe
+                    exec(`ps -p ${pid} -o comm=`, (err, out) => {
+                        resolve(out.trim() ? 'active' : 'inactive');
+                    });
+                } else {
+                    resolve('inactive');
+                }
             });
         } else if (serviceName === 'inka') {
-            // Buscar proceso inka
-            exec(`pgrep -f inka`, (error, stdout) => {
-                resolve(stdout.trim() ? 'active' : 'inactive');
+            // Buscar proceso inka con match más específico
+            exec(`pgrep -f "inka" | head -1`, (error, stdout) => {
+                const pid = stdout.trim();
+                if (pid && !isNaN(pid)) {
+                    // Verificar que el proceso realmente existe y no es el pgrep mismo
+                    exec(`ps -p ${pid} -o args= | grep -v grep | grep -v pgrep`, (err, out) => {
+                        const isRealProcess = out.trim() && out.includes('inka');
+                        resolve(isRealProcess ? 'active' : 'inactive');
+                    });
+                } else {
+                    resolve('inactive');
+                }
             });
         } else {
             // Para asterisk, nginx, etc., usar systemctl
@@ -89,8 +107,8 @@ async function reportMetrics() {
             cpu: cpu.currentLoad.toFixed(1),
             ram: {
                 total: mem.total,
-                // Usar available para calcular el uso real (excluye buff/cache)
-                usagePercent: (((mem.total - mem.available) / mem.total) * 100).toFixed(1)
+                // Usar 'used' para calcular el uso real (excluye buff/cache automáticamente)
+                usagePercent: ((mem.used / mem.total) * 100).toFixed(1)
             },
             disk: {
                 use: disk.length > 0 ? disk[0].use.toFixed(1) : '0'

@@ -156,7 +156,7 @@ function App() {
             <p className="text-slate-500 font-medium">Waiting for remote Debian nodes to broadcast telemetry data.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
+          <div className="flex flex-col gap-4">
             {serverList.map((server) => (
               <ServerCard key={server.hostname} server={server} />
             ))}
