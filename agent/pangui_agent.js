@@ -29,37 +29,19 @@ function checkStatus(serviceName) {
     return new Promise((resolve) => {
         // Para raco e inka, buscar el proceso directamente (no son servicios de systemd)
         if (serviceName === 'raco') {
-            // raco es en realidad racodialer (proceso Java)
-            // Usar pgrep con -x para match exacto y verificar que realmente existe
-            exec(`pgrep -f "java.*racodialer" | head -1`, (error, stdout) => {
-                const pid = stdout.trim();
-                if (pid && !isNaN(pid)) {
-                    // Verificar que el proceso realmente existe
-                    exec(`ps -p ${pid} -o comm=`, (err, out) => {
-                        resolve(out.trim() ? 'active' : 'inactive');
-                    });
-                } else {
-                    resolve('inactive');
-                }
+            // Buscamos cualquier proceso que contenga 'racodialer' o 'raco'
+            exec(`pgrep -f "racodialer|raco"`, (error, stdout) => {
+                resolve(stdout.trim() ? 'active' : 'inactive');
             });
         } else if (serviceName === 'inka') {
-            // Buscar proceso inka con match más específico
-            exec(`pgrep -f "inka" | head -1`, (error, stdout) => {
-                const pid = stdout.trim();
-                if (pid && !isNaN(pid)) {
-                    // Verificar que el proceso realmente existe y no es el pgrep mismo
-                    exec(`ps -p ${pid} -o args= | grep -v grep | grep -v pgrep`, (err, out) => {
-                        const isRealProcess = out.trim() && out.includes('inka');
-                        resolve(isRealProcess ? 'active' : 'inactive');
-                    });
-                } else {
-                    resolve('inactive');
-                }
+            // Buscamos cualquier proceso que contenga 'inka'
+            exec(`pgrep -f "inka"`, (error, stdout) => {
+                resolve(stdout.trim() ? 'active' : 'inactive');
             });
         } else {
             // Para asterisk, nginx, etc., usar systemctl
             exec(`systemctl is-active ${serviceName}`, (error, stdout) => {
-                resolve(stdout.trim()); // Retorna 'active', 'inactive', 'failed', etc.
+                resolve(stdout.trim());
             });
         }
     });
@@ -75,7 +57,7 @@ async function reportMetrics() {
             si.osInfo()
         ]);
 
-        // Obtener IP: primero intentar la IP pública, luego la privada
+        // ... ip logic ...
         let ip = '0.0.0.0';
         const publicInterface = net.find(n => !n.internal && n.ip4 && !n.ip4.startsWith('127.'));
         if (publicInterface) {
@@ -87,13 +69,10 @@ async function reportMetrics() {
         const racoStatus = await checkStatus('raco');
         const inkaStatus = await checkStatus('inka');
 
-        // Debug: mostrar estado de servicios
-        console.log(`[Services] asterisk:${asteriskStatus} nginx:${nginxStatus} raco:${racoStatus} inka:${inkaStatus}`);
+        // Cálculo de RAM corregido: (Total - Disponible) representa el uso real sin cache
+        const realUsedMem = mem.total - mem.available;
+        const ramUsagePercent = ((realUsedMem / mem.total) * 100).toFixed(1);
 
-        // Debug: mostrar valores de memoria
-        console.log(`[RAM Debug] total:${(mem.total / 1024 / 1024 / 1024).toFixed(2)}GB used:${(mem.used / 1024 / 1024 / 1024).toFixed(2)}GB active:${(mem.active / 1024 / 1024 / 1024).toFixed(2)}GB available:${(mem.available / 1024 / 1024 / 1024).toFixed(2)}GB`);
-
-        // Calcular uptime en formato legible
         const uptimeSeconds = os.uptime();
         const days = Math.floor(uptimeSeconds / 86400);
         const hours = Math.floor((uptimeSeconds % 86400) / 3600);
@@ -107,8 +86,7 @@ async function reportMetrics() {
             cpu: cpu.currentLoad.toFixed(1),
             ram: {
                 total: mem.total,
-                // Usar 'used' para calcular el uso real (excluye buff/cache automáticamente)
-                usagePercent: ((mem.used / mem.total) * 100).toFixed(1)
+                usagePercent: ramUsagePercent
             },
             disk: {
                 use: disk.length > 0 ? disk[0].use.toFixed(1) : '0'
