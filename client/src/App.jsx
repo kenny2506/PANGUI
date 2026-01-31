@@ -152,15 +152,13 @@ function App() {
             <div className="w-24 h-24 bg-blue-600/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
               <Activity size={48} className="text-blue-500" />
             </div>
-            <h3 className="text-2xl font-bold mb-2">Establishing Uplink...</h3>
-            <p className="text-slate-500 font-medium">Waiting for remote Debian nodes to broadcast telemetry data.</p>
+            <h3 className="text-2xl font-bold mb-2">Estableciendo Conexión...</h3>
+            <p className="text-slate-500 font-medium text-center px-6">Esperando que los nodos remotos comiencen a transmitir datos de telemetría.</p>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-6">
+          <div className="flex flex-col gap-6">
             {serverList.map((server) => (
-              <div key={server.hostname} className="w-full max-w-6xl">
-                <ServerCard server={server} />
-              </div>
+              <ServerCard key={server.hostname} server={server} />
             ))}
           </div>
         )}
