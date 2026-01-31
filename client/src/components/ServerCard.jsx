@@ -3,8 +3,15 @@ import { Cpu, HardDrive, Activity, AlertCircle, Zap, Shield, Globe, Clock } from
 
 const ServerCard = React.memo(({ server }) => {
     const audioRef = useRef(null);
+    const [, setTick] = React.useState(0);
     const ALERT_THRESHOLD = 85;
     const OFFLINE_THRESHOLD = 5000; // 5 segundos sin señal
+
+    // Forzar re-renderizado cada segundo para chequear la desconexión
+    useEffect(() => {
+        const timer = setInterval(() => setTick(t => t + 1), 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     // Detección de pérdida de conexión
     const isOffline = (Date.now() - (server.timestamp || 0)) > OFFLINE_THRESHOLD;

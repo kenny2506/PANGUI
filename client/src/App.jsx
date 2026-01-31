@@ -7,6 +7,12 @@ import { Power, LayoutGrid, Radio, Zap, AlertCircle, Activity } from 'lucide-rea
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [servers, setServers] = useState({});
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -27,7 +33,9 @@ function App() {
 
     const checkIsCritical = (s) => {
       const services = s.services || {};
+      const isOffline = (Date.now() - (s.timestamp || 0)) > 5000;
       return (
+        isOffline ||
         s.cpu > 80 ||
         parseFloat(s.ram.usagePercent) > 80 ||
         (services.asterisk && services.asterisk !== 'active') ||
@@ -52,7 +60,7 @@ function App() {
       totalNodes: list.length,
       alertNodes: alertCount
     };
-  }, [servers]);
+  }, [servers, token, tick]); // Dependemos de servers, token y el reloj interno
 
   if (!token) {
     return (
