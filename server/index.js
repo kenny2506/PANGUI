@@ -37,9 +37,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('metrics', (data) => {
-        // Broadcast a todos los clientes conectados
-        // data: { hostname, cpu, ram, disk, services, timestamp }
-        io.to('clients').emit('server-update', data);
+        console.log(`[Metrics] Recibidas de: ${data.hostname} | RAM: ${data.ram?.usagePercent}%`);
+        // Broadcast a todos los clientes (Web)
+        io.emit('server-update', data);
     });
 
     socket.on('disconnect', () => {

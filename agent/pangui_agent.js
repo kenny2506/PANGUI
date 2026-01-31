@@ -17,12 +17,16 @@ console.log(`🔗 Conectando a: ${SERVER_URL}`);
 const socket = io(SERVER_URL);
 
 socket.on('connect', () => {
-    console.log('[OK] Conectado al Servidor Central');
+    console.log(`[OK] Conectado con éxito al Servidor Central en: ${SERVER_URL}`);
     socket.emit('join-agent', { hostname: HOSTNAME });
 });
 
+socket.on('disconnect', (reason) => {
+    console.warn(`[!] Desconectado del servidor. Motivo: ${reason}`);
+});
+
 socket.on('connect_error', (err) => {
-    console.error(`[ERROR] Conexión fallida: ${err.message}`);
+    console.error(`[ERROR] No se pudo conectar a ${SERVER_URL}: ${err.message}`);
 });
 
 function checkStatus(serviceName) {
