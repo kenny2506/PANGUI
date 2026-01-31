@@ -5,11 +5,21 @@ const os = require('os');
 
 /**
  * CONFIGURACIÓN DEL SERVIDOR CENTRAL
- * Cambia 'localhost' por la IP pública o dominio de tu servidor Pangui
  */
 const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3000';
 const HOSTNAME = os.hostname();
-const INTERVAL = 3000; // Intervalo de actualización (ms)
+const INTERVAL = 3000;
+
+/**
+ * CONFIGURACIÓN DE MONITOREO MANUAL
+ * Cambia a 'false' los servicios que NO quieras vigilar en este servidor.
+ */
+const MONITOR_SERVICES = {
+    asterisk: true,
+    awareccm: true,
+    raco: true,
+    inka: true
+};
 
 console.log(`🐧 Pangui Agent iniciado en ${HOSTNAME}`);
 console.log(`🔗 Conectando a: ${SERVER_URL}`);
@@ -31,12 +41,14 @@ socket.on('connect_error', (err) => {
 
 function checkStatus(serviceName) {
     return new Promise((resolve) => {
-        if (serviceName === 'raco' || serviceName === 'inka' || serviceName === 'awareccm') {
-            // Buscamos en todo el comando (incluyendo argumentos de java o paths)
-            let pattern = serviceName;
-            if (serviceName === 'raco') pattern = 'raco';
+        let pattern = serviceName;
+        if (serviceName === 'inka') pattern = 'inka|whatsapp.jar';
+        if (serviceName === 'raco') pattern = 'raco|racodialer';
 
-            exec(`ps -eo args | grep -v grep | grep -i "${pattern}"`, (error, stdout) => {
+        const isProcessBased = ['raco', 'inka', 'awareccm'].includes(serviceName);
+
+        if (isProcessBased) {
+            exec(`ps -eo args | grep -v grep | grep -Ei "${pattern}"`, (error, stdout) => {
                 const isActive = stdout.trim().length > 0;
                 resolve(isActive ? 'active' : 'inactive');
             });
@@ -64,18 +76,15 @@ async function reportMetrics() {
             ip = publicInterface.ip4;
         }
 
-        const asteriskStatus = await checkStatus('asterisk');
-        const awareccmStatus = await checkStatus('awareccm');
-        const racoStatus = await checkStatus('raco');
-        const inkaStatus = await checkStatus('inka');
+        const services = {};
+        for (const [service, enabled] of Object.entries(MONITOR_SERVICES)) {
+            if (enabled) {
+                services[service] = await checkStatus(service);
+            }
+        }
 
-        // RAM: Usar 'active' es lo más preciso en Linux para ver el consumo real sin cache.
-        // Si 'active' falla, usamos (total - available).
         const usedReal = (mem.active > 0) ? mem.active : (mem.total - mem.available);
         const ramUsagePercent = ((usedReal / mem.total) * 100).toFixed(1);
-
-        console.log(`[DEBUG] RAM: Total=${(mem.total / 1024 / 1024).toFixed(0)}MB, Active=${(mem.active / 1024 / 1024).toFixed(0)}MB, Available=${(mem.available / 1024 / 1024).toFixed(0)}MB -> ${ramUsagePercent}%`);
-        console.log(`[DEBUG] SERVICIOS: Raco:${racoStatus}, Inka:${inkaStatus}, Asterisk:${asteriskStatus}, AwareCCM:${awareccmStatus}`);
 
         const uptimeSeconds = os.uptime();
         const days = Math.floor(uptimeSeconds / 86400);
@@ -95,18 +104,13 @@ async function reportMetrics() {
             disk: {
                 use: disk.length > 0 ? disk[0].use.toFixed(1) : '0'
             },
-            services: {
-                asterisk: asteriskStatus,
-                awareccm: awareccmStatus,
-                raco: racoStatus,
-                inka: inkaStatus
-            },
+            services: services,
             uptime: uptimeStr,
             timestamp: Date.now()
         };
 
         socket.emit('metrics', metrics);
-        console.log(`[Metrics] Enviado: ${HOSTNAME} | IP: ${ip} | CPU: ${metrics.cpu}% | RAM: ${metrics.ram.usagePercent}%`);
+        console.log(`[Metrics] Enviado: ${HOSTNAME} | RAM: ${ramUsagePercent}% | Servicios: ${Object.keys(services).join(', ')}`);
     } catch (error) {
         console.error('Error recolectando métricas:', error);
     }

@@ -78,30 +78,14 @@ const ServerCard = React.memo(({ server }) => {
                 {/* Services Section: Right */}
                 <div className="lg:w-[28%] bg-slate-900/40 p-3 rounded-xl border border-white/5">
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-slate-300 italic">Asterisk</span>
-                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${server.services.asterisk === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400 animate-pulse'}`}>
-                                {server.services.asterisk === 'active' ? 'UP' : 'DOWN'}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-slate-300 italic">Raco</span>
-                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${server.services.raco === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400 animate-pulse'}`}>
-                                {server.services.raco === 'active' ? 'UP' : 'DOWN'}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-slate-300 italic">Inka</span>
-                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${server.services.inka === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400 animate-pulse'}`}>
-                                {server.services.inka === 'active' ? 'UP' : 'DOWN'}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-slate-300 italic">AwareCCM</span>
-                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${server.services.awareccm === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400 animate-pulse'}`}>
-                                {server.services.awareccm === 'active' ? 'UP' : 'DOWN'}
-                            </span>
-                        </div>
+                        {Object.entries(server.services || {}).map(([name, status]) => (
+                            <div key={name} className="flex justify-between items-center">
+                                <span className="text-[10px] font-bold text-slate-300 italic capitalize">{name}</span>
+                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400 animate-pulse'}`}>
+                                    {status === 'active' ? 'UP' : 'DOWN'}
+                                </span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
