@@ -42,7 +42,7 @@ const ServerCard = React.memo(({ server }) => {
 
     return (
         <div className={`glass p-1 rounded-[2.5rem] transition-all duration-500 hover:scale-[1.005] ${isCritical ? 'critical-glow shadow-red-500/20 shadow-xl' : 'hover:border-blue-500/40'}`}>
-            <audio ref={audioRef} loop src="https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3" />
+            <audio ref={audioRef} src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" />
 
             <div className="bg-[#1e293b]/60 backdrop-blur-md rounded-[2.4rem] p-6 h-full flex flex-col lg:flex-row lg:items-center lg:gap-8">
                 {/* ID Section: Left */}
