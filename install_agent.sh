@@ -53,7 +53,7 @@ if [ -d ".git" ]; then
     git fetch --all
     git reset --hard origin/main
 else
-    git clone https://github.com/kenny2506/PANGUI.git .
+    git clone https://github.com/kenny2506/PANGUI .
 fi
 
 cd agent

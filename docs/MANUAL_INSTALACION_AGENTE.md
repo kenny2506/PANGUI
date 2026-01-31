@@ -35,7 +35,7 @@ sudo npm install pm2 -g
 ```bash
 mkdir -p /var/www/aware/utilidades/pangui
 cd /var/www/aware/utilidades/pangui
-git clone https://github.com/kenny2506/PANGUI.git .
+git clone https://github.com/kenny2506/PANGUI .
 cd agent
 npm install
 ```
