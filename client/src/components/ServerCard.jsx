@@ -99,9 +99,9 @@ const ServerCard = React.memo(({ server }) => {
                             </span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-300 italic">Nginx</span>
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${server.services.nginx === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-                                {server.services.nginx === 'active' ? 'UP' : 'DOWN'}
+                            <span className="text-xs font-bold text-slate-300 italic">AwareCCM</span>
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${server.services.awareccm === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400 animate-pulse'}`}>
+                                {server.services.awareccm === 'active' ? 'UP' : 'DOWN'}
                             </span>
                         </div>
                     </div>

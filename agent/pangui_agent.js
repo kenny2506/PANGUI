@@ -31,9 +31,11 @@ socket.on('connect_error', (err) => {
 
 function checkStatus(serviceName) {
     return new Promise((resolve) => {
-        if (serviceName === 'raco' || serviceName === 'inka') {
-            // Buscamos en todo el comando (incluyendo argumentos de java)
-            const pattern = serviceName === 'raco' ? 'raco' : 'inka';
+        if (serviceName === 'raco' || serviceName === 'inka' || serviceName === 'awareccm') {
+            // Buscamos en todo el comando (incluyendo argumentos de java o paths)
+            let pattern = serviceName;
+            if (serviceName === 'raco') pattern = 'raco';
+
             exec(`ps -eo args | grep -v grep | grep -i "${pattern}"`, (error, stdout) => {
                 const isActive = stdout.trim().length > 0;
                 resolve(isActive ? 'active' : 'inactive');
@@ -56,7 +58,6 @@ async function reportMetrics() {
             si.osInfo()
         ]);
 
-        // ... ip logic ...
         let ip = '0.0.0.0';
         const publicInterface = net.find(n => !n.internal && n.ip4 && !n.ip4.startsWith('127.'));
         if (publicInterface) {
@@ -64,7 +65,7 @@ async function reportMetrics() {
         }
 
         const asteriskStatus = await checkStatus('asterisk');
-        const nginxStatus = await checkStatus('nginx');
+        const awareccmStatus = await checkStatus('awareccm');
         const racoStatus = await checkStatus('raco');
         const inkaStatus = await checkStatus('inka');
 
@@ -74,7 +75,7 @@ async function reportMetrics() {
         const ramUsagePercent = ((usedReal / mem.total) * 100).toFixed(1);
 
         console.log(`[DEBUG] RAM: Total=${(mem.total / 1024 / 1024).toFixed(0)}MB, Active=${(mem.active / 1024 / 1024).toFixed(0)}MB, Available=${(mem.available / 1024 / 1024).toFixed(0)}MB -> ${ramUsagePercent}%`);
-        console.log(`[DEBUG] SERVICIOS: Raco:${racoStatus}, Inka:${inkaStatus}, Asterisk:${asteriskStatus}`);
+        console.log(`[DEBUG] SERVICIOS: Raco:${racoStatus}, Inka:${inkaStatus}, Asterisk:${asteriskStatus}, AwareCCM:${awareccmStatus}`);
 
         const uptimeSeconds = os.uptime();
         const days = Math.floor(uptimeSeconds / 86400);
@@ -96,7 +97,7 @@ async function reportMetrics() {
             },
             services: {
                 asterisk: asteriskStatus,
-                nginx: nginxStatus,
+                awareccm: awareccmStatus,
                 raco: racoStatus,
                 inka: inkaStatus
             },
