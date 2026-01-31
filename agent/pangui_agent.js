@@ -100,7 +100,7 @@ async function reportMetrics() {
             timestamp: Date.now()
         };
 
-        socket.emit('server-metrics', metrics);
+        socket.emit('metrics', metrics);
         console.log(`[Metrics] Enviado: ${HOSTNAME} | IP: ${ip} | CPU: ${metrics.cpu}% | RAM: ${metrics.ram.usagePercent}%`);
     } catch (error) {
         console.error('Error recolectando métricas:', error);
