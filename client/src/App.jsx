@@ -119,7 +119,7 @@ function App() {
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">SERVERS</span>
-              <span className="text-2xl font-black text-white">{totalNodes} Active</span>
+              <span className="text-2xl font-black text-white">{totalNodes} Activos</span>
             </div>
           </div>
 
@@ -129,7 +129,7 @@ function App() {
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">OPTIMO</span>
-              <span className="text-2xl font-black text-white">{totalNodes - alertNodes} Healthy</span>
+              <span className="text-2xl font-black text-white">{totalNodes - alertNodes} Saludables</span>
             </div>
           </div>
 
@@ -139,7 +139,7 @@ function App() {
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">CRITICO</span>
-              <span className={`text-2xl font-black ${alertNodes > 0 ? 'text-red-400' : 'text-slate-400'}`}>{alertNodes} Failing</span>
+              <span className={`text-2xl font-black ${alertNodes > 0 ? 'text-red-400' : 'text-slate-400'}`}>{alertNodes} Fallando</span>
             </div>
           </div>
         </div>
