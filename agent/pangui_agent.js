@@ -42,7 +42,7 @@ socket.on('connect_error', (err) => {
 function checkStatus(serviceName) {
     return new Promise((resolve) => {
         let pattern = serviceName;
-        if (serviceName === 'inka') pattern = 'inka|whatsapp.jar';
+        if (serviceName === 'inka') pattern = 'inka|whatsapp.jar|core.jar';
         if (serviceName === 'raco') pattern = 'raco|racodialer';
 
         const isProcessBased = ['raco', 'inka', 'awareccm'].includes(serviceName);
