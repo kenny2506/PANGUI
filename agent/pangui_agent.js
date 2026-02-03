@@ -18,7 +18,7 @@ const MONITOR_SERVICES = {
     asterisk: true,
     awareccm: true,
     raco: true,
-    inka: true
+    inka: false
 };
 
 console.log(`🐧 Pangui Agent iniciado en ${HOSTNAME}`);
