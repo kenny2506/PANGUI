@@ -3,17 +3,10 @@ const si = require('systeminformation');
 const { exec } = require('child_process');
 const os = require('os');
 
-/**
- * CONFIGURACIÓN DEL SERVIDOR CENTRAL
- */
 const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3000';
 const HOSTNAME = os.hostname();
 const INTERVAL = 3000;
 
-/**
- * CONFIGURACIÓN DE MONITOREO MANUAL
- * Cambia a 'false' los servicios que NO quieras vigilar en este servidor.
- */
 const MONITOR_SERVICES = {
     asterisk: true,
     awareccm: true,
@@ -22,41 +15,35 @@ const MONITOR_SERVICES = {
 };
 
 console.log(`🐧 Pangui Agent iniciado en ${HOSTNAME}`);
-console.log(`🔗 Conectando a: ${SERVER_URL}`);
-
 const socket = io(SERVER_URL);
 
 socket.on('connect', () => {
-    console.log(`[OK] Conectado con éxito al Servidor Central en: ${SERVER_URL}`);
+    console.log(`[OK] Conectado con éxito al Servidor Central`);
     socket.emit('join-agent', { hostname: HOSTNAME });
-});
-
-socket.on('disconnect', (reason) => {
-    console.warn(`[!] Desconectado del servidor. Motivo: ${reason}`);
-});
-
-socket.on('connect_error', (err) => {
-    console.error(`[ERROR] No se pudo conectar a ${SERVER_URL}: ${err.message}`);
 });
 
 function checkStatus(serviceName) {
     return new Promise((resolve) => {
-        let pattern = serviceName;
-        if (serviceName === 'inka') pattern = 'inka|whatsapp.jar|core.jar';
-        if (serviceName === 'raco') pattern = 'raco|racodialer';
+        let command;
 
-        const isProcessBased = ['raco', 'inka', 'awareccm'].includes(serviceName);
-
-        if (isProcessBased) {
-            exec(`ps -eo args | grep -v grep | grep -Ei "${pattern}"`, (error, stdout) => {
-                const isActive = stdout.trim().length > 0;
-                resolve(isActive ? 'active' : 'inactive');
-            });
+        if (serviceName === 'awareccm') {
+            // Filtro triple: nombre del servicio - sin postgres - sin el propio grep
+            command = `ps -ef | grep "${serviceName}" | grep -v "postgres" | grep -v "grep"`;
+        } else if (serviceName === 'inka') {
+            command = `ps -ef | grep -Ei "inka|whatsapp.jar|core.jar" | grep -v "grep"`;
+        } else if (serviceName === 'raco') {
+            command = `ps -ef | grep -Ei "raco|racodialer" | grep -v "grep"`;
         } else {
             exec(`systemctl is-active ${serviceName}`, (error, stdout) => {
-                resolve(stdout.trim());
+                resolve(stdout ? stdout.trim() : 'inactive');
             });
+            return;
         }
+
+        exec(command, (error, stdout) => {
+            const isActive = stdout && stdout.trim().length > 0;
+            resolve(isActive ? 'active' : 'inactive');
+        });
     });
 }
 
@@ -70,12 +57,6 @@ async function reportMetrics() {
             si.osInfo()
         ]);
 
-        let ip = '0.0.0.0';
-        const publicInterface = net.find(n => !n.internal && n.ip4 && !n.ip4.startsWith('127.'));
-        if (publicInterface) {
-            ip = publicInterface.ip4;
-        }
-
         const services = {};
         for (const [service, enabled] of Object.entries(MONITOR_SERVICES)) {
             if (enabled) {
@@ -86,31 +67,18 @@ async function reportMetrics() {
         const usedReal = (mem.active > 0) ? mem.active : (mem.total - mem.available);
         const ramUsagePercent = ((usedReal / mem.total) * 100).toFixed(1);
 
-        const uptimeSeconds = os.uptime();
-        const days = Math.floor(uptimeSeconds / 86400);
-        const hours = Math.floor((uptimeSeconds % 86400) / 3600);
-        const minutes = Math.floor((uptimeSeconds % 3600) / 60);
-        const uptimeStr = `${days}d ${hours}h ${minutes}m`;
-
         const metrics = {
             hostname: HOSTNAME,
-            ip: ip,
-            os: `${osInfo.distro} ${osInfo.release}` || 'Linux',
             cpu: cpu.currentLoad.toFixed(1),
-            ram: {
-                total: mem.total,
-                usagePercent: ramUsagePercent
-            },
-            disk: {
-                use: disk.length > 0 ? disk[0].use.toFixed(1) : '0'
-            },
+            ram: { total: mem.total, usagePercent: ramUsagePercent },
+            disk: { use: disk.length > 0 ? disk[0].use.toFixed(1) : '0' },
             services: services,
-            uptime: uptimeStr,
+            uptime: `${Math.floor(os.uptime() / 3600)}h ${Math.floor((os.uptime() % 3600) / 60)}m`,
             timestamp: Date.now()
         };
 
         socket.emit('metrics', metrics);
-        console.log(`[Metrics] Enviado: ${HOSTNAME} | RAM: ${ramUsagePercent}% | Servicios: ${Object.keys(services).join(', ')}`);
+        console.log(`[Metrics] ${new Date().toLocaleTimeString()} | RAM: ${ramUsagePercent}% | awareccm: ${services.awareccm}`);
     } catch (error) {
         console.error('Error recolectando métricas:', error);
     }
