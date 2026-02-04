@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import Login from './components/Login';
 import ServerCard from './components/ServerCard';
-import { Power, LayoutGrid, Radio, Zap, AlertCircle, Activity } from 'lucide-react';
+import { Power, LayoutGrid, Radio, Zap, AlertCircle, Activity, Search } from 'lucide-react';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [servers, setServers] = useState({});
   const [tick, setTick] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => setTick(t => t + 1), 1000);
@@ -46,8 +47,13 @@ function App() {
 
     const alertCount = list.filter(checkIsCritical).length;
 
+    // Filtrar por búsqueda
+    const filteredList = list.filter(server => 
+      server.hostname.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     // Priorizar críticos arriba
-    list.sort((a, b) => {
+    filteredList.sort((a, b) => {
       const aC = checkIsCritical(a);
       const bC = checkIsCritical(b);
       if (aC && !bC) return -1;
@@ -56,11 +62,11 @@ function App() {
     });
 
     return {
-      serverList: list,
+      serverList: filteredList,
       totalNodes: list.length,
       alertNodes: alertCount
     };
-  }, [servers, token, tick]); // Dependemos de servers, token y el reloj interno
+  }, [servers, token, tick, searchQuery]); // Agregamos searchQuery a las dependencias
 
   if (!token) {
     return (
@@ -93,17 +99,26 @@ function App() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden lg:flex items-center gap-4 px-4 py-1.5 bg-slate-900/60 rounded-xl border border-white/5">
-            <div className="flex flex-col items-center">
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Status</span>
-              <span className="text-emerald-400 text-[10px] font-black leading-none">STABLE</span>
-            </div>
-            <div className="w-[1px] h-4 bg-white/10" />
-            <div className="flex flex-col items-center">
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">ALERTAS</span>
-              <span className={`text-[10px] font-black leading-none ${alertNodes > 0 ? 'text-red-400' : 'text-slate-400'}`}>{alertNodes}</span>
-            </div>
+          {/* Campo de búsqueda con lupa */}
+          <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-slate-900/60 rounded-xl border border-white/5 hover:border-blue-500/30 transition-all">
+            <Search size={16} className="text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar servidor..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent border-none outline-none text-sm text-slate-200 placeholder-slate-500 w-40 focus:w-60 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-slate-400 hover:text-white transition-colors text-xs"
+              >
+                ✕
+              </button>
+            )}
           </div>
+          
           <button
             onClick={() => {
               setServers({});
@@ -160,6 +175,12 @@ function App() {
             </div>
             <h3 className="text-2xl font-bold mb-2">Estableciendo Conexión...</h3>
             <p className="text-slate-500 font-medium text-center px-6">Esperando que los nodos remotos comiencen a transmitir datos de telemetría.</p>
+          </div>
+        ) : serverList.length === 0 ? (
+          <div className="glass rounded-[3.5rem] py-20 flex flex-col items-center justify-center border-dashed border-2 border-slate-700/30 bg-white/2">
+            <Search size={48} className="text-slate-500 mb-4" />
+            <h3 className="text-xl font-bold mb-2">No se encontraron servidores</h3>
+            <p className="text-slate-500 font-medium">No hay servidores que coincidan con "{searchQuery}"</p>
           </div>
         ) : (
           <div className="flex flex-col gap-6">
