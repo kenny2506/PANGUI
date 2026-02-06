@@ -67,7 +67,7 @@ const getServices = async () => {
         let pid = "0";
         if (s === 'inkacore') pid = tryRead('/opt/inka/core.pid');
         else if (s === 'racodialer') pid = tryRead('/opt/racodialer/racodialer.pid');
-        else if (s === 'awareccm') pid = tryRead('/opt/awareccm/awareccm.pid');
+        else if (s === 'awareccm') pid = tryRead('/opt/awareccm/aware.pid');
         else {
             const m = ps.split('\n').find(l => l.includes(s));
             if (m) pid = m.trim().split(/\s+/)[1];
