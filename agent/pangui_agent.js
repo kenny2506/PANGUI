@@ -6,7 +6,7 @@ const os = require('os');
 const util = require('util');
 const execPromise = util.promisify(exec);
 
-const SERVER_URL = process.env.SERVER_URL || 'http://158.69.139.196:3000';
+const SERVER_URL = process.env.SERVER_URL || 'http://TU-IP:3000';
 const HOSTNAME = os.hostname();
 const INTERVAL = 3000;
 
