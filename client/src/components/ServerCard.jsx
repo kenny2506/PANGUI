@@ -1,121 +1,152 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Cpu, HardDrive, Activity, Shield, Globe, Clock, Volume2, VolumeX } from 'lucide-react';
+import { Cpu, HardDrive, Activity, Shield, Globe, Clock, Volume2, VolumeX, ChevronDown, Phone, ShieldCheck } from 'lucide-react';
 
-const ServerCard = React.memo(({ server }) => {
+const ServerCard = React.memo(({ server, isExpanded, onToggle, theme }) => {
   const audioRef = useRef(null);
   const [isMuted, setIsMuted] = useState(false);
-  const [, setTick] = useState(0);
-  
-  const ALERT_THRESHOLD = 85;
-  const OFFLINE_THRESHOLD = 5000; 
+  const isDark = theme === 'dark';
+  const isOffline = (Date.now() - (server.timestamp || 0)) > 8000;
+  const services = server.servicios || {};
+  const isCritical = isOffline || Object.values(services).some(s => (s?.status || s) !== 'active') || parseFloat(server.cpu) > 85;
 
   useEffect(() => {
-    const timer = setInterval(() => setTick(t => t + 1), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Lógica de estados
-  const isOffline = (Date.now() - (server.timestamp || 0)) > OFFLINE_THRESHOLD;
-  const hasServiceFail = Object.values(server.services || {}).some(status => status !== 'active');
-  const hasHighLoad = server.cpu > ALERT_THRESHOLD || parseFloat(server.ram?.usagePercent || 0) > ALERT_THRESHOLD;
-  
-  const isCritical = hasServiceFail || hasHighLoad || isOffline;
-
-  useEffect(() => {
-    if (isCritical && !isMuted && audioRef.current) {
-      audioRef.current.play().catch(() => {
-        console.warn("Interacción requerida para activar audio");
-      });
-    } else if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-  }, [isCritical, isMuted]);
-
-  const MetricItem = ({ icon: Icon, label, value, percent, colorClass, bgClass }) => (
-    <div className="bg-black/20 p-2.5 rounded-xl border border-white/[0.03] flex flex-col gap-1.5 group/item">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-1.5 text-slate-400 text-[9px] font-bold uppercase tracking-wider">
-          <Icon size={12} className={`${colorClass} group-hover/item:scale-110 transition-transform`} />
-          {label}
-        </div>
-        <span className={`text-xs font-black tabular-nums ${percent > ALERT_THRESHOLD ? 'text-red-400 animate-pulse' : 'text-white/90'}`}>
-          {value}
-        </span>
-      </div>
-      <div className="w-full bg-slate-900/80 rounded-full h-1.5 p-[1px] border border-white/5 shadow-inner">
-        <div
-          className={`h-full transition-all duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1) rounded-full relative overflow-hidden ${bgClass}`}
-          style={{ width: `${Math.max(2, percent)}%` }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
-        </div>
-      </div>
-    </div>
-  );
+    if (isCritical && !isMuted && !isOffline && audioRef.current) {
+        audioRef.current.play().catch(() => {});
+    } else if (audioRef.current) { audioRef.current.pause(); }
+  }, [isCritical, isMuted, isOffline]);
 
   return (
-    <div className={`glass p-1 rounded-[2rem] transition-all duration-500 ${isCritical ? 'critical-glow border-red-500/50 shadow-lg shadow-red-500/10' : 'hover:border-blue-500/40 border-white/5'}`}>
+    <div className={`transition-all duration-300 border mb-2 overflow-hidden ${isExpanded ? 'rounded-3xl md:rounded-[2.5rem]' : 'rounded-3xl md:rounded-full'} ${isDark ? (isExpanded ? 'bg-[#1e293b] border-blue-500/40' : 'bg-[#1e293b]/40 border-white/5') : 'bg-white border-blue-100 shadow-sm'} ${isCritical ? 'border-red-500/50 bg-red-500/5' : ''}`}>
       <audio ref={audioRef} loop src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" />
 
-      <div className={`bg-[#1e293b]/60 backdrop-blur-md rounded-[1.9rem] p-4 h-full flex flex-col lg:flex-row lg:items-center lg:gap-6 ${isOffline ? 'opacity-80' : ''}`}>
-
-        {/* ID Section: Left */}
-        <div className="lg:w-[22%] flex items-center gap-3 mb-4 lg:mb-0">
-          <div className={`relative w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${isCritical ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'}`}>
-            <Shield size={24} />
+      {/* CABECERA RESPONSIVE */}
+      <div onClick={onToggle} className="p-3 md:p-4 px-4 md:pl-6 flex flex-col md:flex-row md:items-center cursor-pointer relative z-10 gap-3">
+        
+        {/* IDENTIDAD */}
+        <div className="flex items-center gap-3 md:w-[22%]">
+          <div className="relative shrink-0">
+            <div className={`w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center ${isCritical ? 'bg-red-500/20 text-red-400' : 'bg-blue-600/20 text-blue-400'}`}>
+              {isExpanded ? <ChevronDown size={20} /> : <Shield size={20} />}
+            </div>
             {isCritical && (
-              <button 
-                onClick={() => setIsMuted(!isMuted)}
-                className="absolute -top-2 -right-2 bg-slate-800 p-1 rounded-full border border-white/10 hover:bg-slate-700 transition-colors"
-              >
-                {isMuted ? <VolumeX size={12} className="text-red-400" /> : <Volume2 size={12} className="text-emerald-400 animate-bounce" />}
+              <button onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }} className="absolute -top-1.5 -right-1.5 p-1 bg-slate-800 rounded-full border border-white/10 shadow-xl z-50">
+                {isMuted ? <VolumeX size={10} className="text-red-400" /> : <Volume2 size={10} className="text-emerald-400 animate-pulse" />}
               </button>
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-0.5">
-              <h3 className="font-bold text-lg text-white truncate leading-none">{server.hostname}</h3>
-              <div className={`w-2 h-2 rounded-full ${isOffline ? 'bg-red-600 animate-ping' : (isCritical ? 'bg-red-500' : 'bg-emerald-500')} shadow-[0_0_8px_currentcolor] shrink-0`} />
-              {isOffline && <span className="text-[10px] font-black text-red-400 animate-pulse">OFFLINE</span>}
-            </div>
-            <div className="flex flex-wrap items-center gap-2 mt-0.5">
-              <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
-                <Globe size={10} /> {server.ip}
-              </span>
-              <span className="text-[9px] text-blue-400 font-bold flex items-center gap-1 bg-blue-500/5 px-1.5 py-0.5 rounded border border-blue-500/10">
-                <Clock size={10} /> {server.uptime}
-              </span>
+            <h3 className={`font-black text-base md:text-xl truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              {server.hostname}
+              <span className={`inline-block w-2 h-2 rounded-full ml-2 ${isOffline ? 'bg-red-600 animate-ping' : (isCritical ? 'bg-red-500' : 'bg-emerald-500')}`} />
+            </h3>
+            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+               <span className="flex items-center gap-1 font-mono tracking-tighter"><Globe size={10}/> {isOffline ? 'OFFLINE' : server.ip}</span>
+               <span className="text-blue-400 flex items-center gap-1"><Clock size={10}/> {isOffline ? '-' : server.uptime}</span>
             </div>
           </div>
         </div>
 
-        {/* Metrics Section: Center */}
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4 lg:mb-0">
-          <MetricItem icon={Cpu} label="CPU" value={`${server.cpu}%`} percent={server.cpu} colorClass="text-blue-400" bgClass="bg-blue-500" />
-          <MetricItem icon={Activity} label="RAM" value={`${server.ram.usagePercent}%`} percent={server.ram.usagePercent} colorClass="text-purple-400" bgClass="bg-purple-500" />
-          <MetricItem icon={HardDrive} label="DISK" value={`${server.disk.use}%`} percent={server.disk.use} colorClass="text-emerald-400" bgClass="bg-emerald-500" />
-        </div>
+        {/* MÉTRICAS (Stack en móvil) */}
+        {!isOffline ? (
+          <div className="grid grid-cols-3 md:flex md:flex-[3] gap-2 md:gap-3">
+            <MetricBox icon={Cpu} label="CPU" value={`${server.cpu}%`} percent={server.cpu} color="blue" isDark={isDark} />
+            <MetricBox icon={Activity} label="RAM" value={`${server.ram?.usagePercent}%`} percent={server.ram?.usagePercent} color="purple" isDark={isDark} />
+            <MetricBox icon={HardDrive} label="HDD" value={server.hdd?.[0]?.porc_uso || '0%'} percent={parseFloat(server.hdd?.[0]?.porc_uso)} color="emerald" isDark={isDark} />
+          </div>
+        ) : (
+          <div className="flex-1 text-center text-red-500/40 font-black text-[10px] uppercase tracking-widest">Sin señal de datos</div>
+        )}
 
-        {/* Services Section: Right */}
-        <div className="lg:w-[28%] bg-slate-900/40 p-3 rounded-xl border border-white/5">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-            {Object.entries(server.services || {}).map(([name, status]) => (
-              <div key={name} className="flex justify-between items-center group/svc">
-                <span className="text-[10px] font-bold text-slate-300 italic capitalize flex items-center gap-1">
-                  <div className={`w-1 h-1 rounded-full ${status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                  {name}
-                </span>
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1 ${isOffline ? 'bg-slate-800 text-slate-500' : (status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400 animate-pulse border border-red-500/20')}`}>
-                  {isOffline ? '??' : (status === 'active' ? 'OK' : 'FAIL')}
-                </span>
+        {/* SERVICIOS (Ocultos en móvil compactado si es necesario) */}
+        {!isExpanded && !isOffline && (
+           <div className="hidden lg:grid grid-cols-2 gap-x-4 gap-y-1 pl-6 border-l border-white/10 min-w-[200px] ml-auto">
+              {['asterisk', 'awareccm', 'raco', 'inka'].map(k => (
+                <div key={k} className="flex items-center justify-between gap-2">
+                   <span className="text-[9px] font-bold uppercase italic text-slate-400">{k}</span>
+                   <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${(services[k]?.status || services[k]) === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                     {(services[k]?.status || services[k]) === 'active' ? 'OK' : 'ERR'}
+                   </span>
+                </div>
+              ))}
+           </div>
+        )}
+      </div>
+
+      {/* PANEL EXPANDIDO */}
+      <div className={`grid transition-all duration-300 ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+        <div className="overflow-hidden px-4 md:px-8 pb-6 pt-4 border-t border-white/5">
+          {!isOffline && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className={`p-4 rounded-2xl border ${isDark ? 'bg-blue-900/5 border-blue-500/10' : 'bg-white border-blue-100 shadow-sm'}`}>
+                    <h4 className="text-xs font-black text-blue-500 uppercase mb-4 flex items-center gap-2"><Phone size={14}/> Troncales PJSIP</h4>
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                        <StatBlock label="Agentes" value={server.asterisk?.agents?.registrados || 0} color="white" isDark={isDark} />
+                        <StatBlock label="Online" value={server.asterisk?.agents?.conectados || 0} color="emerald" isDark={isDark} />
+                        <StatBlock label="Llamadas" value={server.asterisk?.agents?.hablando || 0} color="blue" isDark={isDark} />
+                    </div>
+                    <div className="max-h-40 overflow-y-auto rounded-lg border border-white/5 font-mono text-[10px]">
+                        <table className="w-full text-left">
+                            <thead className={isDark ? 'bg-white/5 text-slate-500' : 'bg-slate-50'}>
+                                <tr><th className="p-2 uppercase tracking-tighter">Troncal</th><th className="p-2 text-right uppercase tracking-tighter">Canales</th><th className="p-2 text-right uppercase tracking-tighter">Estado</th></tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {server.asterisk?.trunks?.map((t, i) => (
+                                    <tr key={i} className="hover:bg-blue-500/5 transition-colors">
+                                        <td className="p-2 font-bold text-slate-400">{t.trunkname}</td>
+                                        <td className="p-2 text-right text-emerald-500 font-bold">{t.oncall}</td>
+                                        <td className={`p-2 text-right font-black ${t.status === 'Online' ? 'text-emerald-500' : 'text-red-500'}`}>{t.status}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                   {server.certificado && (
+                      <div className={`p-4 rounded-2xl border flex justify-between items-center ${isDark ? 'bg-indigo-900/10 border-indigo-500/10' : 'bg-white border-indigo-100 shadow-sm'}`}>
+                         <div className="flex items-center gap-3 text-indigo-400"><ShieldCheck size={20}/>
+                            <div><div className="text-[9px] font-bold opacity-50 uppercase tracking-tighter">Certificado SSL</div><div className="text-xs font-mono text-white font-bold">{server.certificado.dominio}</div></div>
+                         </div>
+                         <span className="text-[9px] font-black text-slate-500 font-mono">{server.certificado.fecha_expiracion}</span>
+                      </div>
+                   )}
+                   <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/40 border-white/5' : 'bg-white border-blue-100 shadow-sm'}`}>
+                      <h4 className="text-[10px] font-black text-slate-500 uppercase mb-3 flex items-center gap-2"><HardDrive size={14}/> Almacenamiento</h4>
+                      {server.hdd?.map((d, i) => (
+                        <div key={i} className="mb-3 last:mb-0">
+                            <div className="flex justify-between text-[9px] font-bold text-slate-400 mb-1 font-mono"><span>{d.sistema}</span><span>{d.size} ({d.porc_uso})</span></div>
+                            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden shadow-inner"><div className="h-full bg-blue-600 rounded-full" style={{width: d.porc_uso}}></div></div>
+                        </div>
+                      ))}
+                   </div>
+                </div>
               </div>
-            ))}
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
 });
+
+const MetricBox = ({ icon: Icon, label, value, percent, color, isDark }) => {
+    const bg = { blue: 'bg-blue-500', purple: 'bg-purple-500', emerald: 'bg-emerald-500' };
+    return (
+        <div className={`p-1.5 md:p-2 md:px-4 rounded-xl md:rounded-2xl border flex-1 ${isDark ? 'bg-black/20 border-white/[0.03]' : 'bg-white border-blue-100'}`}>
+            <div className="flex justify-between items-center mb-0.5 md:mb-1 px-0.5 md:px-1">
+              <span className="text-[8px] md:text-[9px] font-bold text-slate-400 flex items-center gap-1 md:gap-1.5 uppercase tracking-widest"><Icon size={10}/> {label}</span>
+              <span className={`text-[9px] md:text-[10px] font-black ${isDark ? 'text-white' : 'text-slate-700'}`}>{value}</span>
+            </div>
+            <div className={`w-full h-1 md:h-1.5 rounded-full overflow-hidden shadow-inner ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}><div className={`h-full rounded-full transition-all duration-700 ${bg[color]}`} style={{ width: `${percent}%` }} /></div>
+        </div>
+    );
+};
+
+const StatBlock = ({ label, value, color, isDark }) => (
+    <div className={`p-2 rounded-xl border text-center ${isDark ? 'bg-slate-900/60 border-white/5' : 'bg-slate-50 border-blue-100 shadow-sm'}`}>
+        <div className={`text-base md:text-xl font-black ${color === 'emerald' ? 'text-emerald-500' : color === 'blue' ? 'text-blue-500' : isDark ? 'text-white' : 'text-slate-800'}`}>{value}</div>
+        <div className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">{label}</div>
+    </div>
+);
 
 export default ServerCard;
